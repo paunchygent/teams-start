@@ -26,8 +26,8 @@
   const button = document.getElementById("open");
   button.textContent = app.name;
   button.hidden = false;
-  // A Website tab gives the page no Teams context, so initialize never resolves there; the plain link
-  // (target from ?target=, default _top) then lets Teams handle the stage deep link itself.
+  // A Website tab gives the page no Teams context, so initialize never resolves there. In that tab _top does
+  // nothing, and _blank (https or msteams:) opens the modal only by way of the default browser (2026-10-22).
   const target = new URLSearchParams(location.search).get("target") || "_top";
   button.onclick = () => window.open(link, target);
   const teams = await Promise.race([microsoftTeams.app.initialize().then(() => true), new Promise((r) => setTimeout(() => r(false), 3000))]);
