@@ -23,11 +23,16 @@
   const link = `https://teams.microsoft.com/l/stage/${app.teamsAppId}/0?context=${encodeURIComponent(JSON.stringify(context))}`;
   const button = document.getElementById("open");
   button.textContent = app.name;
-  await microsoftTeams.app.initialize();
+  button.hidden = false;
+  // A Website tab gives the page no Teams context, so initialize never resolves there; the plain link
+  // (target from ?target=, default _top) then lets Teams handle the stage deep link itself.
+  const target = new URLSearchParams(location.search).get("target") || "_top";
+  button.onclick = () => window.open(link, target);
+  const teams = await Promise.race([microsoftTeams.app.initialize().then(() => true), new Promise((r) => setTimeout(() => r(false), 3000))]);
+  if (!teams) return;
   microsoftTeams.app.notifySuccess();
   const open = () => microsoftTeams.app.openLink(link).catch((e) => console.error("openLink", e));
   button.onclick = open;
-  button.hidden = false;
   open();
 })();
 </script>
