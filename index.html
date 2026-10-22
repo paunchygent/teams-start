@@ -20,7 +20,9 @@
   const key = new URLSearchParams(location.search).get("app");
   const app = (await (await fetch("apps.json", { cache: "no-store" })).json())[key];
   const context = { appId: app.teamsAppId, contentUrl: app.playerUrl, websiteUrl: app.playerUrl, name: app.name, openMode: app.openMode };
-  const link = `https://teams.microsoft.com/l/stage/${app.teamsAppId}/0?context=${encodeURIComponent(JSON.stringify(context))}`;
+  // ?scheme=msteams hands the link to the Teams app through the OS; the https form goes through the default browser.
+  const base = new URLSearchParams(location.search).get("scheme") === "msteams" ? "msteams:" : "https://teams.microsoft.com";
+  const link = `${base}/l/stage/${app.teamsAppId}/0?context=${encodeURIComponent(JSON.stringify(context))}`;
   const button = document.getElementById("open");
   button.textContent = app.name;
   button.hidden = false;
