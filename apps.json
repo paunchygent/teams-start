@@ -2,7 +2,7 @@
   "boka-prov": {
     "name": "Boka prov",
     "teamsAppId": "f821df8c-a9bc-46f3-aea1-2e7ca8d3a09e",
-    "playerUrl": "https://apps.powerapps.com/play/e/default-25a772a5-38b6-4cac-8d01-f9c198583efb/a/b08271cc-9691-4fc5-9e81-4ce208f59b1f?tenantId=25a772a5-38b6-4cac-8d01-f9c198583efb&source=teamstab&hostclienttype=desktop&locale=en-us&theme=dark",
+    "playerUrl": "https://apps.powerapps.com/play/e/default-25a772a5-38b6-4cac-8d01-f9c198583efb/a/b08271cc-9691-4fc5-9e81-4ce208f59b1f?tenantId=25a772a5-38b6-4cac-8d01-f9c198583efb&source=teamstab&hostclienttype=desktop&locale=en-us&theme=dark&wrapper=teams-start",
     "openMode": "modal"
   }
 }

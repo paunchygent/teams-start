@@ -15,7 +15,8 @@
 </head>
 <body>
 <!-- Boka prov is shown in a frame so the tab, favorite and installed app get this page's icon and title (TASK-EDUOS-10-02-10).
-     The allow list is the one in Microsoft Learn's embed example (embed-apps-dev); no sandbox. -->
-<iframe title="Boka prov" src="https://apps.powerapps.com/play/e/default-25a772a5-38b6-4cac-8d01-f9c198583efb/a/b08271cc-9691-4fc5-9e81-4ce208f59b1f?tenantId=25a772a5-38b6-4cac-8d01-f9c198583efb&amp;source=iframe" allow="geolocation; microphone; camera"></iframe>
+     The allow list is the one in Microsoft Learn's embed example (embed-apps-dev); no sandbox.
+     wrapper=teams-start tells the app it runs in a wrapper, so Min planering hides its "Boka prov i Teams" banner (TASK-EDUOS-10-07-07 D21). -->
+<iframe title="Boka prov" src="https://apps.powerapps.com/play/e/default-25a772a5-38b6-4cac-8d01-f9c198583efb/a/b08271cc-9691-4fc5-9e81-4ce208f59b1f?tenantId=25a772a5-38b6-4cac-8d01-f9c198583efb&amp;source=iframe&amp;wrapper=teams-start" allow="geolocation; microphone; camera"></iframe>
 </body>
 </html>
