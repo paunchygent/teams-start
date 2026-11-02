@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96">
-  <!-- Boka prov's Teams app icon: the Teams glyph (../../../teams-app/color.svg) at 55 % on Verdigris Teal, as Power Apps builds it. -->
-  <rect width="96" height="96" rx="16" fill="#3F7F78"/>
+  <!-- Boka prov's Teams app icon: the Teams glyph (../../../teams-app/color.svg) at 55 % on Boka prov purple #5B2A86 (Olof 2 Nov 2026), as Power Apps builds it. -->
+  <rect width="96" height="96" rx="16" fill="#5B2A86"/>
   <svg x="21.6" y="21.6" width="52.8" height="52.8" viewBox="7.5 5.5 88 88">
   <mask id="glyph">
     <rect x="16" y="10" width="48" height="66" rx="4" fill="#FFFFFF"/>
