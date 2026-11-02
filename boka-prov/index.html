@@ -38,28 +38,47 @@
 <script>
 // One-click install of this wrapper page (TASK-EDUOS-10-07-07 D50). ?installera=1 opens the install card, the only
 // place the install button exists, so a Power App button can Launch() straight into the install prompt (D52).
+// Observed in Edge on the Mac, 2 Nov 2026: beforeinstallprompt arrived about 6 s after load, with the app already
+// installed it never arrives, and a click made from a background tab opened no dialog and broke later clicks in
+// that same page load. So the card is on screen from the first paint and always says something useful.
 (() => {
-  const knappar = document.querySelectorAll("[data-installera]");
   const kort = document.getElementById("kort");
+  const texten = kort.querySelector("p");
+  const knapp = kort.querySelector("[data-installera]");
   const kortlage = new URLSearchParams(location.search).get("installera") === "1";
   const fristaende = matchMedia("(display-mode: standalone)");
   let uppskjuten = null;
   let installerad = false;
+  let erbjudsInte = false;
   let stangt = false;
 
-  const visa = (syns) => {
-    for (const knapp of knappar) knapp.hidden = !syns;
-    kort.hidden = !syns || !kortlage || stangt;
-  };
-
-  // Both routes install this page. Edge without navigator.install (stable today) needs the stashed
-  // beforeinstallprompt; the installed app window, Safari and a window with neither route shows no button.
+  // Card mode shows one of three states: waiting (no install route yet, the button sits disabled as
+  // "Förbereder …"), ready (navigator.install or a stashed beforeinstallprompt, the button enabled)
+  // and not offered (the app is already installed, Edge gave no route 10 s after load, or the prompt
+  // could not open: the button hides and the text says where the app lives).
   const synka = () => {
-    const mojlig = !installerad && (typeof navigator.install === "function" || uppskjuten !== null);
-    visa(mojlig && !fristaende.matches);
+    const synligt = kortlage && !stangt && !fristaende.matches;
+    kort.hidden = !synligt;
+    if (!synligt) return;
+    const redo = !installerad && (typeof navigator.install === "function" || uppskjuten !== null);
+    if (installerad) {
+      texten.textContent = "Klart! Boka prov finns nu som app i Edge.";
+      knapp.hidden = true;
+    } else if (erbjudsInte && !redo) {
+      texten.textContent = "Boka prov finns redan som app i Edge, eller så kan Edge inte installera den här sidan. Öppna appen från Edge-menyn ··· → Appar.";
+      knapp.hidden = true;
+    } else {
+      texten.textContent = "Klicka för att lägga Boka prov som en egen app i Edge.";
+      knapp.hidden = false;
+      knapp.disabled = !redo;
+      knapp.textContent = redo ? "Installera Boka prov som app" : "Förbereder …";
+    }
   };
 
   const installera = async () => {
+    // Edge opens the install dialog only from a click in the visible tab; a backgrounded click broke the
+    // rest of that page load on 2 Nov, so a click there does nothing.
+    if (document.visibilityState !== "visible") return;
     if (typeof navigator.install === "function") {
       try {
         await navigator.install();
@@ -72,7 +91,16 @@
     }
     if (!uppskjuten) return;
     const handelse = uppskjuten;
-    await handelse.prompt();
+    try {
+      await handelse.prompt();
+    } catch (fel) {
+      console.error("beforeinstallprompt.prompt()", fel);
+      uppskjuten = null;
+      knapp.disabled = false;
+      erbjudsInte = true;
+      synka();
+      return;
+    }
     const { outcome } = await handelse.userChoice;
     // The event answers one prompt() only; Edge fires a new one if the user changes their mind.
     uppskjuten = null;
@@ -90,8 +118,14 @@
     uppskjuten = null;
     synka();
   });
+  // Edge offers no install route when the app is already installed; 10 s after load with no route the
+  // card moves to the not-offered state instead of waiting on a prompt that never comes.
+  setTimeout(() => {
+    erbjudsInte = true;
+    synka();
+  }, 10000);
   fristaende.addEventListener("change", synka);
-  for (const knapp of knappar) knapp.addEventListener("click", installera);
+  knapp.addEventListener("click", installera);
   document.getElementById("stang").addEventListener("click", (event) => {
     event.preventDefault();
     stangt = true;
