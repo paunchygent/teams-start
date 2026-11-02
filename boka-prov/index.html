@@ -26,8 +26,11 @@
      The allow list is the one in Microsoft Learn's embed example (embed-apps-dev); no sandbox.
      wrapper=teams-start tells the app it runs in a wrapper, so Min planering hides its "Boka prov i Teams" banner (TASK-EDUOS-10-07-07 D21).
      The card installs this page, never the Power Apps player address, which Edge cannot install (TASK-EDUOS-10-07-07 D50).
-     The page frame keeps the full window height: the install button lives only in the ?installera=1 card (D52). -->
-<iframe title="Boka prov" src="https://apps.powerapps.com/play/e/default-25a772a5-38b6-4cac-8d01-f9c198583efb/a/b08271cc-9691-4fc5-9e81-4ce208f59b1f?tenantId=25a772a5-38b6-4cac-8d01-f9c198583efb&amp;source=iframe&amp;wrapper=teams-start" allow="geolocation; microphone; camera"></iframe>
+     The page frame keeps the full window height: the install button lives only in the ?installera=1 card (D52).
+     Startsida's step-1 button opens this page with ?hjalp=nara: the script puts that parameter on the frame, so the
+     app starts on Hjälp's section "Lägg till Boka prov som en app i Teams" (D67), and drops it from this page's own address, so a
+     favourite saved here opens the plain Boka prov page (TASK-EDUOS-10-07-07 D68). -->
+<iframe id="boka-prov" title="Boka prov" allow="geolocation; microphone; camera"></iframe>
 <div id="kort" hidden>
   <article>
     <p>Klicka för att lägga Boka prov som en egen app i Edge.</p>
@@ -36,6 +39,24 @@
   </article>
 </div>
 <script>
+// The frame address, set here rather than in the HTML so ?hjalp=nara reaches the app and never loads the plain
+// player first. The parameters are the ones the frame has always carried (TASK-EDUOS-10-07-07 D21, D50, D68).
+(() => {
+  const APP_ADRESS = "https://apps.powerapps.com/play/e/default-25a772a5-38b6-4cac-8d01-f9c198583efb/a/b08271cc-9691-4fc5-9e81-4ce208f59b1f?tenantId=25a772a5-38b6-4cac-8d01-f9c198583efb&source=iframe&wrapper=teams-start";
+  const ram = document.getElementById("boka-prov");
+  const egna = new URLSearchParams(location.search);
+  const hjalp = egna.get("hjalp");
+  // Only "nara" selects a section; any other value is dropped like an absent one and never reaches the app.
+  ram.src = APP_ADRESS + (hjalp === "nara" ? "&hjalp=nara" : "");
+  if (hjalp !== null) {
+    // The page's own address keeps its other parameters, so ?installera=1 still opens the card, and loses
+    // hjalp so a favourite saved here opens the plain Boka prov page (D68).
+    egna.delete("hjalp");
+    const resten = egna.toString();
+    history.replaceState(null, "", location.pathname + (resten ? `?${resten}` : "") + location.hash);
+  }
+})();
+
 // One-click install of this wrapper page (TASK-EDUOS-10-07-07 D50). ?installera=1 opens the install card, the only
 // place the install button exists, so a Power App button can Launch() straight into the install prompt (D52).
 // Observed in Edge on the Mac, 2 Nov 2026: beforeinstallprompt arrived about 6 s after load, with the app already
