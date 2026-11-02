@@ -76,8 +76,7 @@
   };
 
   const installera = async () => {
-    // Edge opens the install dialog only from a click in the visible tab; a backgrounded click broke the
-    // rest of that page load on 2 Nov, so a click there does nothing.
+    // Edge opens the install dialog only from a user click in the visible tab. A click without user activation (a background or scripted click) is refused with NotAllowedError; the stashed beforeinstallprompt event is kept so the user's next click still works (2 Nov 2026).
     if (document.visibilityState !== "visible") return;
     if (typeof navigator.install === "function") {
       try {
@@ -95,6 +94,7 @@
       await handelse.prompt();
     } catch (fel) {
       console.error("beforeinstallprompt.prompt()", fel);
+      if (fel && fel.name === "NotAllowedError") return;
       uppskjuten = null;
       knapp.disabled = false;
       erbjudsInte = true;
