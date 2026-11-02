@@ -10,13 +10,101 @@
 <link rel="manifest" href="manifest.webmanifest">
 <style>
   html, body { margin: 0; height: 100%; overflow: hidden; }
-  iframe { display: block; border: 0; width: 100%; height: 100vh; height: 100dvh; }
+  body { display: flex; flex-direction: column; font-family: "Segoe UI", system-ui, sans-serif; color: #1f1f1f; }
+  iframe { display: block; border: 0; width: 100%; flex: 1 1 auto; min-height: 0; }
+  [hidden] { display: none !important; }
+  button { font: inherit; font-size: 15px; padding: 8px 18px; border: 0; border-radius: 6px; background: #5B2A86; color: #fff; cursor: pointer; }
+  button:hover { background: #4A2270; }
+  #kort { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(0, 0, 0, .35); }
+  #kort article { max-width: 420px; margin: 16px; padding: 24px; border-radius: 10px; background: #fff; text-align: center; box-shadow: 0 8px 30px rgba(0, 0, 0, .25); }
+  #kort p { margin: 0 0 20px; font-size: 17px; line-height: 1.45; }
+  #kort a { display: inline-block; margin-top: 18px; color: #5B2A86; font-size: 15px; }
 </style>
 </head>
 <body>
 <!-- Boka prov is shown in a frame so the tab, favorite and installed app get this page's icon and title (TASK-EDUOS-10-02-10).
      The allow list is the one in Microsoft Learn's embed example (embed-apps-dev); no sandbox.
-     wrapper=teams-start tells the app it runs in a wrapper, so Min planering hides its "Boka prov i Teams" banner (TASK-EDUOS-10-07-07 D21). -->
+     wrapper=teams-start tells the app it runs in a wrapper, so Min planering hides its "Boka prov i Teams" banner (TASK-EDUOS-10-07-07 D21).
+     The card installs this page, never the Power Apps player address, which Edge cannot install (TASK-EDUOS-10-07-07 D50).
+     The page frame keeps the full window height: the install button lives only in the ?installera=1 card (D52). -->
 <iframe title="Boka prov" src="https://apps.powerapps.com/play/e/default-25a772a5-38b6-4cac-8d01-f9c198583efb/a/b08271cc-9691-4fc5-9e81-4ce208f59b1f?tenantId=25a772a5-38b6-4cac-8d01-f9c198583efb&amp;source=iframe&amp;wrapper=teams-start" allow="geolocation; microphone; camera"></iframe>
+<div id="kort" hidden>
+  <article>
+    <p>Klicka för att lägga Boka prov som en egen app i Edge.</p>
+    <button type="button" data-installera>Installera Boka prov som app</button>
+    <a id="stang" href="#">Stäng</a>
+  </article>
+</div>
+<script>
+// One-click install of this wrapper page (TASK-EDUOS-10-07-07 D50). ?installera=1 opens the install card, the only
+// place the install button exists, so a Power App button can Launch() straight into the install prompt (D52).
+(() => {
+  const knappar = document.querySelectorAll("[data-installera]");
+  const kort = document.getElementById("kort");
+  const kortlage = new URLSearchParams(location.search).get("installera") === "1";
+  const fristaende = matchMedia("(display-mode: standalone)");
+  let uppskjuten = null;
+  let installerad = false;
+  let stangt = false;
+
+  const visa = (syns) => {
+    for (const knapp of knappar) knapp.hidden = !syns;
+    kort.hidden = !syns || !kortlage || stangt;
+  };
+
+  // Both routes install this page. Edge without navigator.install (stable today) needs the stashed
+  // beforeinstallprompt; the installed app window, Safari and a window with neither route shows no button.
+  const synka = () => {
+    const mojlig = !installerad && (typeof navigator.install === "function" || uppskjuten !== null);
+    visa(mojlig && !fristaende.matches);
+  };
+
+  const installera = async () => {
+    if (typeof navigator.install === "function") {
+      try {
+        await navigator.install();
+        installerad = true;
+        synka();
+        return;
+      } catch (fel) {
+        console.error("navigator.install", fel);
+      }
+    }
+    if (!uppskjuten) return;
+    const handelse = uppskjuten;
+    await handelse.prompt();
+    const { outcome } = await handelse.userChoice;
+    // The event answers one prompt() only; Edge fires a new one if the user changes their mind.
+    uppskjuten = null;
+    installerad = outcome === "accepted";
+    synka();
+  };
+
+  addEventListener("beforeinstallprompt", (event) => {
+    event.preventDefault();
+    uppskjuten = event;
+    synka();
+  });
+  addEventListener("appinstalled", () => {
+    installerad = true;
+    uppskjuten = null;
+    synka();
+  });
+  fristaende.addEventListener("change", synka);
+  for (const knapp of knappar) knapp.addEventListener("click", installera);
+  document.getElementById("stang").addEventListener("click", (event) => {
+    event.preventDefault();
+    stangt = true;
+    synka();
+  });
+
+  // The worker only satisfies Edge's install criteria; it caches nothing (sw.js). It registers before load, so it
+  // is active when Edge checks the page the first time; scope ./ keeps it on this page.
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js", { scope: "./" }).catch((fel) => console.error("service worker", fel));
+  }
+  synka();
+})();
+</script>
 </body>
 </html>
